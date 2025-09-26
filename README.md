@@ -18,4 +18,4 @@ A comprehensive hospital registration and tracking system for Kenya.
 - `k8s/` - Kubernetes manifests
 - `monitoring/` - Prometheus and Grafana configurations
 - `ansible/` - Configuration management
-- `.github/workflows/` - CI/CD pipelines
+- `.github/workflows/` - CI/CD pipelines.
