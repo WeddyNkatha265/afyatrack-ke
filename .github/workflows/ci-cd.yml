@@ -40,11 +40,8 @@ jobs:
         TIMESTAMP=$(date -u +"%Y-%m-%dT%H-%M-%SZ")
         echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
         
-        # Single build with multiple tags (more efficient)
         docker build \
           -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$TIMESTAMP \
-          -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
-          -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
           .
     
     - name: Log in to Docker Hub
@@ -56,41 +53,14 @@ jobs:
     - name: Push Docker images
       run: |
         docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$TIMESTAMP
-        docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-        docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
     
     - name: Deployment summary
       run: |
         echo "🎉 Docker Images Successfully Pushed!"
         echo "======================================"
         echo "📦 Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
-        echo "🏷️ Tags:"
+        echo "🏷️ Tag:"
         echo "  - $TIMESTAMP (ISO timestamp)"
-        echo "  - ${{ github.sha }} (git commit)"
-        echo "  - latest"
         echo ""
         echo "🔗 View: https://hub.docker.com/r/weddynkatha265/afyatrack-ke/tags"
 
-  deploy:
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Deploy to Kubernetes
-      uses: digitalocean/action-doctl@v2
-      with:
-        token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-    
-    - name: Save kubeconfig
-      run: |
-        mkdir -p ~/.kube
-        doctl kubernetes cluster kubeconfig save afya-cluster
-    
-    - name: Deploy application
-      run: |
-        kubectl apply -f k8s/
-      env:
-        DATABASE_URL: ${{ secrets.DATABASE_URL }}
