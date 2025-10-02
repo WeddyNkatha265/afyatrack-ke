@@ -1,4 +1,4 @@
-# AfyaTrack KE - Kenya Hospital Registry System
+# AfyaTrack KE - Kenya Hospital Registry System.
 
 A comprehensive hospital registration and tracking system for Kenya.
 
