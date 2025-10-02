@@ -64,26 +64,3 @@ jobs:
         echo ""
         echo "🔗 View: https://hub.docker.com/r/weddynkatha265/afyatrack-ke/tags"
 
-  deploy:
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Deploy to Kubernetes
-      uses: digitalocean/action-doctl@v2
-      with:
-        token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-    
-    - name: Save kubeconfig
-      run: |
-        mkdir -p ~/.kube
-        doctl kubernetes cluster kubeconfig save afya-cluster
-    
-    - name: Deploy application
-      run: |
-        kubectl apply -f k8s/
-      env:
-        DATABASE_URL: ${{ secrets.DATABASE_URL }}
