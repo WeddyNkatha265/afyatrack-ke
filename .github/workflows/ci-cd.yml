@@ -64,3 +64,60 @@ jobs:
         echo ""
         echo "🔗 View: https://hub.docker.com/r/weddynkatha265/afyatrack-ke/tags"
 
+
+  # STAGE 3: Deploy to AWS EC2 (VM from Task 3)
+  deploy-to-vm:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup SSH connection to EC2
+      run: |
+        # Create SSH directory and key file
+        mkdir -p ~/.ssh
+        echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/ec2_key.pem
+        chmod 600 ~/.ssh/ec2_key.pem
+        
+        # Get EC2 IP from Terraform output (you'll set this as secret)
+        EC2_IP="${{ secrets.EC2_PUBLIC_IP }}"
+        
+        # Test SSH connection
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2_key.pem ubuntu@$EC2_IP "echo '✅ SSH connection successful'"
+
+    - name: Deploy application to EC2
+      run: |
+        EC2_IP="${{ secrets.EC2_PUBLIC_IP }}"
+        
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2_key.pem ubuntu@$EC2_IP "
+          # Stop and remove any existing container
+          sudo docker stop afyatrack-app || true
+          sudo docker rm afyatrack-app || true
+          
+          # Pull the latest image from Docker Hub
+          sudo docker pull $DOCKER_REGISTRY/$IMAGE_NAME:latest
+          
+          # Run the new container
+          sudo docker run -d \
+            --name afyatrack-app \
+            -p 3000:3000 \
+            -p 80:3000 \
+            --restart unless-stopped \
+            $DOCKER_REGISTRY/$IMAGE_NAME:latest
+          
+          echo '✅ Application deployed successfully'
+        "
+
+    - name: Verify deployment
+      run: |
+        EC2_IP="${{ secrets.EC2_PUBLIC_IP }}"
+        echo "🌐 Testing application at: http://$EC2_IP:3000"
+        
+        # Wait for app to start
+        sleep 30
+        
+        # Test the application
+        curl -f http://$EC2_IP:3000/health || echo "❌ Health check failed"
+        echo "✅ Deployment verified!"
