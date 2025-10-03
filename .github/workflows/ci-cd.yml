@@ -1,3 +1,157 @@
+# name: CI/CD Pipeline for AfyaTrack KE
+
+# on:
+#   push:
+#     branches: [ main ]
+#   pull_request:
+#     branches: [ main ]
+
+# env:
+#   REGISTRY: docker.io
+#   IMAGE_NAME: weddynkatha265/afyatrack-ke
+
+# jobs:
+#   test:
+#     runs-on: ubuntu-latest
+#     steps:
+#     - uses: actions/checkout@v3
+#     - name: Setup Node.js
+#       uses: actions/setup-node@v3
+#       with:
+#         node-version: '18'
+#     - name: Install dependencies
+#       run: npm ci
+#       working-directory: app
+#     - name: Run tests
+#       run: npm test
+#       working-directory: app
+
+#   build-and-push:
+#     needs: test
+#     runs-on: ubuntu-latest
+#     if: github.ref == 'refs/heads/main'
+    
+#     steps:
+#     - uses: actions/checkout@v3
+    
+#     - name: Build Docker images with ISO timestamp
+#       run: |
+#         # ISO 8601 format: 2024-01-15T10-30-45Z
+#         TIMESTAMP=$(date -u +"%Y-%m-%dT%H-%M-%SZ")
+#         echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
+        
+#         docker build \
+#           -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$TIMESTAMP \
+#           .
+    
+#     - name: Log in to Docker Hub
+#       uses: docker/login-action@v2
+#       with:
+#         username: ${{ secrets.DOCKER_USERNAME }}
+#         password: ${{ secrets.DOCKER_PASSWORD }}
+    
+#     - name: Push Docker images
+#       run: |
+#         docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$TIMESTAMP
+    
+#     - name: Deployment summary
+#       run: |
+#         echo "🎉 Docker Images Successfully Pushed!"
+#         echo "======================================"
+#         echo "📦 Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+#         echo "🏷️ Tag:"
+#         echo "  - $TIMESTAMP (ISO timestamp)"
+#         echo ""
+#         echo "🔗 View: https://hub.docker.com/r/weddynkatha265/afyatrack-ke/tags"
+
+
+#   # STAGE 3: Deploy to AWS EC2 (VM from Task 3)
+#   deploy-to-vm:
+#     needs: build-and-push
+#     runs-on: ubuntu-latest
+#     env:
+#       REGISTRY: docker.io
+#       IMAGE_NAME: weddynkatha265/afyatrack-ke
+    
+#     steps:
+#     - name: Checkout code
+#       uses: actions/checkout@v3
+
+#     - name: Setup SSH connection to EC2
+#       run: |
+#         # Create SSH directory and key file
+#         mkdir -p ~/.ssh
+#         chmod 700 ~/.ssh
+
+#         # Save the SSH private key from GitHub secret
+#         echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/ec2_key.pem
+#         chmod 600 ~/.ssh/ec2_key.pem
+        
+#         # Get EC2 IP from secret
+#         EC2_IP="${{ secrets.EC2_PUBLIC_IP }}"
+        
+#         # Add to known hosts to avoid prompt
+#         ssh-keyscan -H $EC2_IP >> ~/.ssh/known_hosts
+        
+#         # Test SSH connection
+#         ssh -i ~/.ssh/ec2_key.pem ubuntu@$EC2_IP "echo '✅ SSH connection successful'"
+
+#     - name: Deploy application to EC2
+#       run: |
+#         EC2_IP="${{ secrets.EC2_PUBLIC_IP }}"
+        
+#         ssh -i ~/.ssh/ec2_key.pem ubuntu@$EC2_IP "
+#           # Stop and remove any existing container
+#           sudo docker stop afyatrack-app || true
+#           sudo docker rm afyatrack-app || true
+          
+#           # Pull the latest image from Docker Hub
+#           sudo docker pull $REGISTRY/$IMAGE_NAME:latest
+          
+#           # Run the new container
+#           sudo docker run -d \
+#             --name afyatrack-app \
+#             -p 3000:3000 \
+#             --restart unless-stopped \
+#             $REGISTRY/$IMAGE_NAME:latest
+          
+#           echo '✅ Application deployed successfully'
+          
+#           # Wait a bit and check if it's running
+#           sleep 10
+#           sudo docker ps | grep afyatrack-app || echo '❌ Container not running'
+#         "
+
+#     - name: Verify deployment
+#       run: |
+#         EC2_IP="${{ secrets.EC2_PUBLIC_IP }}"
+#         echo "🌐 Testing application at: http://$EC2_IP:3000"
+        
+#         # Wait for app to start
+#         echo "⏳ Waiting for application to start..."
+#         sleep 30
+        
+#         # Test the application with retries
+#         MAX_RETRIES=5
+#         RETRY_COUNT=0
+        
+#         while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+#           if curl -f http://$EC2_IP:3000/health; then
+#             echo "✅ Health check passed! Application is running."
+#             echo "🌐 Access your application: http://$EC2_IP:3000"
+#             break
+#           else
+#             RETRY_COUNT=$((RETRY_COUNT+1))
+#             echo "⏳ Health check failed, retrying... ($RETRY_COUNT/$MAX_RETRIES)"
+#             sleep 10
+#           fi
+#         done
+        
+#         if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+#           echo "❌ Health check failed after $MAX_RETRIES attempts"
+#           exit 1
+#         fi
+
 name: CI/CD Pipeline for AfyaTrack KE
 
 on:
@@ -42,6 +196,7 @@ jobs:
         
         docker build \
           -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$TIMESTAMP \
+          -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
           .
     
     - name: Log in to Docker Hub
@@ -53,25 +208,22 @@ jobs:
     - name: Push Docker images
       run: |
         docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$TIMESTAMP
+        docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
     
     - name: Deployment summary
       run: |
         echo "🎉 Docker Images Successfully Pushed!"
         echo "======================================"
         echo "📦 Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
-        echo "🏷️ Tag:"
+        echo "🏷️ Tags:"
         echo "  - $TIMESTAMP (ISO timestamp)"
+        echo "  - latest"
         echo ""
         echo "🔗 View: https://hub.docker.com/r/weddynkatha265/afyatrack-ke/tags"
 
-
-  # STAGE 3: Deploy to AWS EC2 (VM from Task 3)
   deploy-to-vm:
     needs: build-and-push
     runs-on: ubuntu-latest
-    env:
-      REGISTRY: docker.io
-      IMAGE_NAME: weddynkatha265/afyatrack-ke
     
     steps:
     - name: Checkout code
@@ -79,10 +231,10 @@ jobs:
 
     - name: Setup SSH connection to EC2
       run: |
-        # Create SSH directory and key file
+        # Create SSH directory
         mkdir -p ~/.ssh
         chmod 700 ~/.ssh
-
+        
         # Save the SSH private key from GitHub secret
         echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/ec2_key.pem
         chmod 600 ~/.ssh/ec2_key.pem
@@ -96,58 +248,92 @@ jobs:
         # Test SSH connection
         ssh -i ~/.ssh/ec2_key.pem ubuntu@$EC2_IP "echo '✅ SSH connection successful'"
 
-    - name: Deploy application to EC2
+    - name: Copy project files to EC2
+      run: |
+        EC2_IP="${{ secrets.EC2_PUBLIC_IP }}"
+        
+        # Copy the entire project to EC2
+        scp -i ~/.ssh/ec2_key.pem -r . ubuntu@$EC2_IP:/home/ubuntu/afyatrack-ke/
+        
+        echo "✅ Project files copied to EC2"
+
+    - name: Deploy with Docker Compose
       run: |
         EC2_IP="${{ secrets.EC2_PUBLIC_IP }}"
         
         ssh -i ~/.ssh/ec2_key.pem ubuntu@$EC2_IP "
-          # Stop and remove any existing container
-          sudo docker stop afyatrack-app || true
-          sudo docker rm afyatrack-app || true
+          cd /home/ubuntu/afyatrack-ke
           
-          # Pull the latest image from Docker Hub
-          sudo docker pull $REGISTRY/$IMAGE_NAME:latest
+          # Install docker-compose if not present
+          if ! command -v docker-compose &> /dev/null; then
+            echo 'Installing docker-compose...'
+            sudo curl -L \"https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)\" -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+          fi
           
-          # Run the new container
-          sudo docker run -d \
-            --name afyatrack-app \
-            -p 3000:3000 \
-            --restart unless-stopped \
-            $REGISTRY/$IMAGE_NAME:latest
+          # Stop and remove any existing containers
+          sudo docker-compose down || true
           
-          echo '✅ Application deployed successfully'
+          # Update the docker-compose to use the Docker Hub image instead of building
+          # We'll use sed to replace 'build: .' with 'image: weddynkatha265/afyatrack-ke:latest'
+          sed -i 's|build: \.|image: weddynkatha265/afyatrack-ke:latest|' docker-compose.yml
           
-          # Wait a bit and check if it's running
-          sleep 10
-          sudo docker ps | grep afyatrack-app || echo '❌ Container not running'
+          # Start the services
+          sudo docker-compose up -d
+          
+          echo '✅ Application deployed with Docker Compose'
         "
+
+    - name: Wait for services to start
+      run: |
+        EC2_IP="${{ secrets.EC2_PUBLIC_IP }}"
+        echo '⏳ Waiting for services to start...'
+        sleep 45
 
     - name: Verify deployment
       run: |
         EC2_IP="${{ secrets.EC2_PUBLIC_IP }}"
-        echo "🌐 Testing application at: http://$EC2_IP:3000"
         
-        # Wait for app to start
-        echo "⏳ Waiting for application to start..."
-        sleep 30
+        # Check container status
+        ssh -i ~/.ssh/ec2_key.pem ubuntu@$EC2_IP "
+          echo '=== Container Status ==='
+          sudo docker-compose ps
+          echo ''
+          echo '=== Web Application Logs ==='
+          sudo docker logs afyatrack-web-app --tail 10
+        "
         
-        # Test the application with retries
-        MAX_RETRIES=5
+        # Test the application
+        echo '🌐 Testing application...'
+        MAX_RETRIES=8
         RETRY_COUNT=0
         
         while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-          if curl -f http://$EC2_IP:3000/health; then
-            echo "✅ Health check passed! Application is running."
-            echo "🌐 Access your application: http://$EC2_IP:3000"
+          if curl -s -f http://$EC2_IP:3000/health > /dev/null; then
+            echo '✅ Application health check passed!'
+            echo '🎉 Deployment successful!'
+            echo '🌐 Your application is live at: http://'$EC2_IP':3000'
             break
           else
             RETRY_COUNT=$((RETRY_COUNT+1))
-            echo "⏳ Health check failed, retrying... ($RETRY_COUNT/$MAX_RETRIES)"
+            echo '⏳ Application not ready yet... ('$RETRY_COUNT'/'$MAX_RETRIES')'
             sleep 10
           fi
         done
         
         if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
-          echo "❌ Health check failed after $MAX_RETRIES attempts"
+          echo '❌ Application health check failed after maximum retries'
           exit 1
         fi
+
+    - name: Final deployment status
+      run: |
+        EC2_IP="${{ secrets.EC2_PUBLIC_IP }}"
+        echo '🎊 DEPLOYMENT COMPLETED SUCCESSFULLY!'
+        echo '====================================='
+        echo '📦 Application: AfyaTrack KE'
+        echo '🌐 URL: http://'$EC2_IP':3000'
+        echo '🖥️  Server: AWS EC2 ('$EC2_IP')'
+        echo '🐳 Stack: Web App + PostgreSQL Database'
+        echo '📁 Using: Your existing docker-compose.yml'
+        echo '⏰ Deployed at: $(date -u)'
