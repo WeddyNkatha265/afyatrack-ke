@@ -69,6 +69,9 @@ jobs:
   deploy-to-vm:
     needs: build-and-push
     runs-on: ubuntu-latest
+    env:
+      REGISTRY: docker.io
+      IMAGE_NAME: weddynkatha265/afyatrack-ke
     
     steps:
     - name: Checkout code
@@ -84,33 +87,39 @@ jobs:
         echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/ec2_key.pem
         chmod 600 ~/.ssh/ec2_key.pem
         
-        # Get EC2 IP from Terraform output (you'll set this as secret)
+        # Get EC2 IP from secret
         EC2_IP="${{ secrets.EC2_PUBLIC_IP }}"
         
+        # Add to known hosts to avoid prompt
+        ssh-keyscan -H $EC2_IP >> ~/.ssh/known_hosts
+        
         # Test SSH connection
-        ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2_key.pem ubuntu@$EC2_IP "echo '✅ SSH connection successful'"
+        ssh -i ~/.ssh/ec2_key.pem ubuntu@$EC2_IP "echo '✅ SSH connection successful'"
 
     - name: Deploy application to EC2
       run: |
         EC2_IP="${{ secrets.EC2_PUBLIC_IP }}"
         
-        ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2_key.pem ubuntu@$EC2_IP "
+        ssh -i ~/.ssh/ec2_key.pem ubuntu@$EC2_IP "
           # Stop and remove any existing container
           sudo docker stop afyatrack-app || true
           sudo docker rm afyatrack-app || true
           
           # Pull the latest image from Docker Hub
-          sudo docker pull $DOCKER_REGISTRY/$IMAGE_NAME:latest
+          sudo docker pull $REGISTRY/$IMAGE_NAME:latest
           
           # Run the new container
           sudo docker run -d \
             --name afyatrack-app \
             -p 3000:3000 \
-            -p 80:3000 \
             --restart unless-stopped \
-            $DOCKER_REGISTRY/$IMAGE_NAME:latest
+            $REGISTRY/$IMAGE_NAME:latest
           
           echo '✅ Application deployed successfully'
+          
+          # Wait a bit and check if it's running
+          sleep 10
+          sudo docker ps | grep afyatrack-app || echo '❌ Container not running'
         "
 
     - name: Verify deployment
@@ -119,8 +128,26 @@ jobs:
         echo "🌐 Testing application at: http://$EC2_IP:3000"
         
         # Wait for app to start
+        echo "⏳ Waiting for application to start..."
         sleep 30
         
-        # Test the application
-        curl -f http://$EC2_IP:3000/health || echo "❌ Health check failed"
-        echo "✅ Deployment verified!"
+        # Test the application with retries
+        MAX_RETRIES=5
+        RETRY_COUNT=0
+        
+        while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+          if curl -f http://$EC2_IP:3000/health; then
+            echo "✅ Health check passed! Application is running."
+            echo "🌐 Access your application: http://$EC2_IP:3000"
+            break
+          else
+            RETRY_COUNT=$((RETRY_COUNT+1))
+            echo "⏳ Health check failed, retrying... ($RETRY_COUNT/$MAX_RETRIES)"
+            sleep 10
+          fi
+        done
+        
+        if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+          echo "❌ Health check failed after $MAX_RETRIES attempts"
+          exit 1
+        fi
