@@ -78,6 +78,9 @@ jobs:
       run: |
         # Create SSH directory and key file
         mkdir -p ~/.ssh
+        chmod 700 ~/.ssh
+
+        # Save the SSH private key from GitHub secret
         echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/ec2_key.pem
         chmod 600 ~/.ssh/ec2_key.pem
         
