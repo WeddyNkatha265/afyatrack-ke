@@ -42,7 +42,6 @@ jobs:
         
         docker build \
           -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$TIMESTAMP \
-          -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
           .
     
     - name: Log in to Docker Hub
@@ -54,18 +53,17 @@ jobs:
     - name: Push Docker images
       run: |
         docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$TIMESTAMP
-        docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
     
     - name: Deployment summary
       run: |
         echo "🎉 Docker Images Successfully Pushed!"
         echo "======================================"
         echo "📦 Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
-        echo "🏷️ Tags:"
+        echo "🏷️ Tag:"
         echo "  - $TIMESTAMP (ISO timestamp)"
-        echo "  - latest"
         echo ""
         echo "🔗 View: https://hub.docker.com/r/weddynkatha265/afyatrack-ke/tags"
+
 
   # STAGE 3: Deploy to AWS EC2 (VM from Task 3)
   deploy-to-vm:
