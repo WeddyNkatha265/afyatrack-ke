@@ -43,7 +43,9 @@ jobs:
         echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
         
         docker build \
+          --build-arg BUILDKIT_INLINE_CACHE=1 \        
           -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$TIMESTAMP \
+          -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
           -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
           .
     
