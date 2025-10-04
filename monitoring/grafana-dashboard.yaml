@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-afyatrack
+  namespace: afyatrack-ke
+data:
+  afyatrack-dashboard.json: |-
+    {
+      "dashboard": {
+        "id": null,
+        "title": "AfyaTrack KE Metrics",
+        "tags": ["afyatrack", "kenya", "hospital"],
+        "timezone": "browser",
+        "panels": [
+          {
+            "id": 1,
+            "title": "HTTP Requests",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(http_requests_total[5m])",
+                "legendFormat": "{{method}} {{route}}"
+              }
+            ],
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+          },
+          {
+            "id": 2,
+            "title": "Hospital Registrations",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "hospital_registrations_total",
+                "legendFormat": "Total Registrations"
+              }
+            ],
+            "gridPos": {"h": 4, "w": 6, "x": 0, "y": 8}
+          },
+          {
+            "id": 3,
+            "title": "Application Health",
+            "type": "heatmap",
+            "targets": [
+              {
+                "expr": "up{app=\"afyatrack-ke\"}",
+                "legendFormat": "Instance {{instance}}"
+              }
+            ],
+            "gridPos": {"h": 6, "w": 6, "x": 6, "y": 8}
+          }
+        ],
+        "time": {"from": "now-6h", "to": "now"}
+      }
+    }
