@@ -1,5 +1,3 @@
-# 
-
 name: CI/CD Pipeline for AfyaTrack KE
 
 on:
@@ -36,18 +34,53 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
-    - name: Build Docker images with ISO timestamp
+    - name: Debug file structure
+      run: |
+        echo "🔍 DEBUG: Checking file structure..."
+        echo "Current directory: $(pwd)"
+        echo ""
+        echo "📁 Root directory contents:"
+        ls -la
+        echo ""
+        echo "📁 App directory contents:"
+        ls -la app/
+        echo ""
+        echo "📁 Views directory contents:"
+        ls -la app/views/ || echo "❌ Views directory not found!"
+        echo ""
+        echo "📄 Checking specific files:"
+        [ -f "Dockerfile" ] && echo "✅ Dockerfile exists" || echo "❌ Dockerfile missing"
+        [ -f "app/package.json" ] && echo "✅ app/package.json exists" || echo "❌ app/package.json missing"
+        [ -f "app/server.js" ] && echo "✅ app/server.js exists" || echo "❌ app/server.js missing"
+        [ -f "app/views/index.ejs" ] && echo "✅ app/views/index.ejs exists" || echo "❌ app/views/index.ejs missing"
+    
+    - name: Build Docker images with --no-cache
       run: |
         # ISO 8601 format: 2024-01-15T10-30-45Z
         TIMESTAMP=$(date -u +"%Y-%m-%dT%H-%M-%SZ")
         echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
         
+        echo "🏗️ Building Docker image with --no-cache..."
         docker build \
-          --build-arg BUILDKIT_INLINE_CACHE=1 \
+          --no-cache \
           -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$TIMESTAMP \
           -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
           -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
           .
+        
+        echo "✅ Build completed"
+    
+    - name: Verify image contents
+      run: |
+        echo "🔍 Verifying image contents..."
+        echo "📁 Checking views directory in built image:"
+        docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest ls -la /app/views/
+        echo ""
+        echo "📄 Checking for index.ejs file:"
+        docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest find /app/views -name "*.ejs" 2>/dev/null || echo "❌ No EJS files found!"
+        echo ""
+        echo "📋 Full app directory structure:"
+        docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest ls -la /app/
     
     - name: Log in to Docker Hub
       uses: docker/login-action@v2
@@ -57,8 +90,11 @@ jobs:
     
     - name: Push Docker images
       run: |
+        echo "📤 Pushing images to Docker Hub..."
         docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$TIMESTAMP
         docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+        
+        echo "✅ Images pushed successfully"
     
     - name: Deployment summary
       run: |
@@ -68,6 +104,9 @@ jobs:
         echo "🏷️ Tags:"
         echo "  - $TIMESTAMP (ISO timestamp)"
         echo "  - latest"
+        echo ""
+        echo "🔍 Image verification:"
+        docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest find /app/views -name "*.ejs" 2>/dev/null && echo "✅ Views directory verified" || echo "❌ Views directory missing"
         echo ""
         echo "🔗 View: https://hub.docker.com/r/weddynkatha265/afyatrack-ke/tags"
 
@@ -98,6 +137,22 @@ jobs:
         # Test SSH connection
         ssh -i ~/.ssh/ec2_key.pem ubuntu@$EC2_IP "echo '✅ SSH connection successful'"
 
+    - name: Verify new image on EC2
+      run: |
+        EC2_IP="${{ secrets.EC2_PUBLIC_IP }}"
+        
+        echo "🔍 Verifying the new image on EC2..."
+        ssh -i ~/.ssh/ec2_key.pem ubuntu@$EC2_IP "
+          echo '📥 Pulling latest image...'
+          sudo docker pull weddynkatha265/afyatrack-ke:latest
+          
+          echo '🔍 Checking views in new image...'
+          sudo docker run --rm weddynkatha265/afyatrack-ke:latest ls -la /app/views/
+          echo ''
+          echo '📄 Checking for index.ejs...'
+          sudo docker run --rm weddynkatha265/afyatrack-ke:latest find /app/views -name '*.ejs' 2>/dev/null && echo '✅ EJS files found' || echo '❌ No EJS files found'
+        "
+
     - name: Copy database files to EC2
       run: |
         EC2_IP="${{ secrets.EC2_PUBLIC_IP }}"
@@ -123,8 +178,11 @@ jobs:
           sudo docker stop afyatrack-web-app afyatrack-database || true
           sudo docker rm afyatrack-web-app afyatrack-database || true
           
-          # Clean up unused volumes and networks
-          sudo docker volume prune -f || true
+          # Clean up unused images to free space
+          sudo docker image prune -f || true
+          
+          # Remove old image to ensure fresh pull
+          sudo docker rmi weddynkatha265/afyatrack-ke:latest || true
           
           # Start PostgreSQL database
           echo '🐘 Starting PostgreSQL database...'
@@ -150,6 +208,10 @@ jobs:
           # Pull and start the application
           echo '🚀 Starting application...'
           sudo docker pull weddynkatha265/afyatrack-ke:latest
+          
+          # Verify the image one more time before running
+          echo '🔍 Final image verification...'
+          sudo docker run --rm weddynkatha265/afyatrack-ke:latest find /app/views -name '*.ejs' 2>/dev/null && echo '✅ Image verified - contains views' || echo '❌ Image missing views'
           
           sudo docker run -d \
             --name afyatrack-web-app \
@@ -236,8 +298,11 @@ jobs:
         MAIN_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://$EC2_IP:3000/ || echo "000")
         if [ "$MAIN_RESPONSE" = "200" ]; then
           echo '✅ Main page loaded successfully'
+          echo '🌐 Application is fully functional!'
         else
           echo '⚠️ Main page returned HTTP '$MAIN_RESPONSE
+          echo '🔍 Checking application logs for details...'
+          ssh -i ~/.ssh/ec2_key.pem ubuntu@$EC2_IP "sudo docker logs afyatrack-web-app --tail 20"
         fi
         
         # Test database connectivity through the app
@@ -258,6 +323,7 @@ jobs:
         echo '🐳 Technology: Docker Containers'
         echo '🗄️  Database: PostgreSQL with Sample Data'
         echo '🚀 Deployment: Pure Docker Commands (No Docker Compose)'
+        echo '🔧 Build: --no-cache (ensures fresh build)'
         echo '⏰ Completed: $(date -u)'
         echo ''
         echo '🔍 Management Commands:'
