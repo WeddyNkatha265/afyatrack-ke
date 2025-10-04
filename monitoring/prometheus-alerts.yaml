@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-alerts
+  namespace: afyatrack-ke
+data:
+  alerts.yml: |
+    groups:
+    - name: afyatrack-alerts
+      rules:
+      - alert: ApplicationDown
+        expr: up{job="afyatrack-app"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "AfyaTrack KE application is down"
+          description: "Application has been down for more than 1 minute"
+
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status_code=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate in AfyaTrack KE"
+          description: "Error rate is above 5% for more than 2 minutes"
+
+      - alert: NoNewRegistrations
+        expr: rate(hospital_registrations_total[1h]) == 0
+        for: 1h
+        labels:
+          severity: info
+        annotations:
+          summary: "No new hospital registrations"
+          description: "No new hospitals registered in the last hour"
+
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High response time detected"
+          description: "95th percentile response time is above 1 second"
+          

@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: afyatrack-web
+  namespace: afyatrack-ke
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: afyatrack-web
+  template:
+    metadata:
+      labels:
+        app: afyatrack-web
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3000"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: afyatrack-web
+        image: weddynkatha265/afyatrack-ke:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: DB_HOST
+          value: "postgresql"
+        - name: DB_USER
+          value: "postgres"
+        - name: DB_PASSWORD
+          value: "password"
+        - name: DB_NAME
+          value: "hospitals"
+        - name: DB_PORT
+          value: "5432"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: afyatrack-service
+  namespace: afyatrack-ke
+spec:
+  selector:
+    app: afyatrack-web
+  ports:
+  - port: 80
+    targetPort: 3000
+  type: NodePort  
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: afyatrack-ingress
+  namespace: afyatrack-ke
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: afyatrack-service
+            port:
+              number: 80
