@@ -1,7 +1,7 @@
 ```markdown
 # 🏥 AfyaTrack KE – Kenya Hospital Registry System
 
-> **A cloud-native, DevOps-enabled hospital registration and management platform for Kenya.**
+ **A cloud-native, DevOps-enabled hospital registration and management platform for Kenya.**
 
 ---
 
