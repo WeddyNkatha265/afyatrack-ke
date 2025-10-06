@@ -2,43 +2,52 @@
 
 set -e
 
-echo "🚀 Starting Ansible Configuration Management for AfyaTrack KE"
+echo "🚀 Starting Ansible Configuration - Bonus Task"
 
-# Check if Ansible is installed
-if ! command -v ansible &> /dev/null; then
-    echo "❌ Ansible is not installed. Installing..."
-    sudo apt update
-    sudo apt install -y ansible
-fi
-
-# Check if hosts file is configured
-if [ ! -f hosts ]; then
-    echo "❌ hosts file not found. Creating template..."
-    cat > hosts << EOF
-[afyatrack_servers]
-afyatrack-ec2 ansible_host=YOUR_EC2_IP_HERE ansible_user=ubuntu
-
-[afyatrack_servers:vars]
-ansible_ssh_private_key_file=~/.ssh/ec2_key.pem
-ansible_ssh_common_args='-o StrictHostKeyChecking=no'
-EOF
-    echo "⚠️  Please edit hosts file with your EC2 IP address"
+# Validate required environment variables
+if [ -z "$EC2_PUBLIC_IP" ]; then
+    echo "❌ ERROR: EC2_PUBLIC_IP environment variable is required"
+    echo "Usage: EC2_PUBLIC_IP=1.2.3.4 SSH_PUBLIC_KEY='ssh-ed25519 ...' ./deploy.sh"
     exit 1
 fi
 
-# Test connection
-echo "🔍 Testing SSH connection to EC2 instance..."
-ansible afyatrack_servers -m ping
-
-# Run the playbook
-echo "📦 Running Ansible playbook..."
-if [ -f vault.yml ]; then
-    ansible-playbook playbook.yml --ask-vault-pass
-else
-    ansible-playbook playbook.yml
+if [ -z "$SSH_PUBLIC_KEY" ]; then
+    echo "❌ ERROR: SSH_PUBLIC_KEY environment variable is required"
+    echo "Get your public key with: cat ~/.ssh/id_ed25519.pub"
+    echo "Usage: EC2_PUBLIC_IP=1.2.3.4 SSH_PUBLIC_KEY='ssh-ed25519 ...' ./deploy.sh"
+    exit 1
 fi
 
-echo "✅ Ansible configuration completed successfully!"
+echo "📋 Deployment Configuration:"
+echo "EC2 Public IP: $EC2_PUBLIC_IP"
+echo "SSH Public Key: $(echo $SSH_PUBLIC_KEY | cut -d' ' -f3 | head -c 20)..."
+echo "SSH Private Key: ${SSH_PRIVATE_KEY_PATH:-~/.ssh/id_ed25519}"
+
+# Test SSH connection
+echo "🔐 Testing SSH connection..."
+if ! ssh -i "${SSH_PRIVATE_KEY_PATH:-~/.ssh/id_ed25519}" -o ConnectTimeout=5 -o BatchMode=yes ubuntu@$EC2_PUBLIC_IP "echo '✅ SSH connection successful'"; then
+    echo "❌ SSH connection failed"
+    echo "Please ensure:"
+    echo "1. EC2 instance is running"
+    echo "2. Security group allows SSH (port 22)" 
+    echo "3. You're using the correct SSH key"
+    exit 1
+fi
+
+# Run Ansible playbook
+echo "🔄 Running Ansible playbook..."
+ansible-playbook -i inventory.yml playbook.yml
+
 echo ""
-echo "🌐 Application should be accessible at: http://YOUR_EC2_IP"
-echo "🔍 Check service status: ssh ubuntu@YOUR_EC2_IP 'systemctl status afyatrack-ke'"
+echo "🎉 Bonus Task Configuration Complete!"
+echo "======================================"
+echo "✅ PostgreSQL installed and running"
+echo "✅ Nginx installed and running" 
+echo "✅ DevOps user configured with SSH access"
+echo "✅ Config file copied to /opt with proper permissions"
+echo ""
+echo "📋 Verification Commands:"
+echo "ssh -i ${SSH_PRIVATE_KEY_PATH:-~/.ssh/id_ed25519} devops@$EC2_PUBLIC_IP"
+echo "ssh -i ${SSH_PRIVATE_KEY_PATH:-~/.ssh/id_ed25519} devops@$EC2_PUBLIC_IP 'ls -la /opt/config.txt'"
+echo "ssh -i ${SSH_PRIVATE_KEY_PATH:-~/.ssh/id_ed25519} devops@$EC2_PUBLIC_IP 'sudo systemctl status postgresql'"
+echo "ssh -i ${SSH_PRIVATE_KEY_PATH:-~/.ssh/id_ed25519} devops@$EC2_PUBLIC_IP 'sudo systemctl status nginx'"

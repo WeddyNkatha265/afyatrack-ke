@@ -34,25 +34,6 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
-    - name: Debug file structure
-      run: |
-        echo "🔍 DEBUG: Checking file structure..."
-        echo "Current directory: $(pwd)"
-        echo ""
-        echo "📁 Root directory contents:"
-        ls -la
-        echo ""
-        echo "📁 App directory contents:"
-        ls -la app/
-        echo ""
-        echo "📁 Views directory contents:"
-        ls -la app/views/ || echo "❌ Views directory not found!"
-        echo ""
-        echo "📄 Checking specific files:"
-        [ -f "Dockerfile" ] && echo "✅ Dockerfile exists" || echo "❌ Dockerfile missing"
-        [ -f "app/package.json" ] && echo "✅ app/package.json exists" || echo "❌ app/package.json missing"
-        [ -f "app/server.js" ] && echo "✅ app/server.js exists" || echo "❌ app/server.js missing"
-        [ -f "app/views/index.ejs" ] && echo "✅ app/views/index.ejs exists" || echo "❌ app/views/index.ejs missing"
     
     - name: Build Docker images with --no-cache
       run: |
@@ -70,17 +51,6 @@ jobs:
         
         echo "✅ Build completed"
     
-    - name: Verify image contents
-      run: |
-        echo "🔍 Verifying image contents..."
-        echo "📁 Checking views directory in built image:"
-        docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest ls -la /app/views/
-        echo ""
-        echo "📄 Checking for index.ejs file:"
-        docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest find /app/views -name "*.ejs" 2>/dev/null || echo "❌ No EJS files found!"
-        echo ""
-        echo "📋 Full app directory structure:"
-        docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest ls -la /app/
     
     - name: Log in to Docker Hub
       uses: docker/login-action@v2
