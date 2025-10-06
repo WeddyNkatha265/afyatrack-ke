@@ -7,6 +7,10 @@
 
 ## Task 1: Version Control Integration (15%)
 
+**Status**: Complete  
+**Repository**: [GitHub - WeddyNkatha265/afyatrack-ke](https://github.com/WeddyNkatha265/afyatrack-ke)
+
+
 ### Approach
 - Initialized Git repository with meaningful commit history using conventional commits
 - Created a Node.js web application with PostgreSQL integration and Kenyan county categorization
@@ -26,6 +30,8 @@
 ---
 
 ## Task 2: Containerization with Docker (15%)
+**Status**: Complete  
+**Docker Hub**: [weddynkatha265/afyatrack-ke](https://hub.docker.com/r/weddynkatha265/afyatrack-ke)
 
 ### Approach
 - Created multi-stage Dockerfile using Alpine Linux for minimal footprint
@@ -60,6 +66,8 @@ CMD ["npm", "start"]
 ---
 
 ## Task 3: Infrastructure as Code with Terraform (20%)
+**Status**: Complete  
+**Cloud Provider**: AWS
 
 ### Approach
 - Designed cloud-agnostic Terraform configuration for AWS
@@ -93,9 +101,36 @@ resource "aws_instance" "web" {
 - ✅ Elastic IP (Static Public IP)
 - ✅ Proper IAM and networking configurations
 
+**Deployment Commands**:
+```bash
+cd terraform
+terraform init
+terraform plan
+terraform apply
+```
+
+**Terraform Outputs**:
+- Web Server URL: `http://<public-ip>:3000`
+- SSH Access: `ssh -i ~/.ssh/id_rsa ubuntu@<public-ip>`
+
 ---
 
 ## Task 4: CI/CD Pipeline with Cloud Integration (25%)
+
+**Status**: Complete  
+**Pipeline**: GitHub Actions
+
+**Pipeline Stages**:
+1. **Test** - Run application tests
+2. **Build** - Create Docker images with multiple tags
+3. **Push** - Upload to Docker Hub registry
+4. **Deploy** - Deploy to AWS infrastructure
+
+**Image Tagging Strategy**:
+- `latest` - Most recent stable version
+- `2024-01-15T10-30-45Z` - ISO timestamp build
+- `effaaabda483390c...` - Git commit SHA
+
 
 ### Approach
 - Implemented GitHub Actions workflow with multiple stages (test, build, deploy)
@@ -176,6 +211,8 @@ Production (EC2 + Docker)
 ---
 
 ## Task 5: Site Reliability Engineering (25%)
+
+**Status**: Complete
 
 ### Approach
 - Implemented Minikube local Kubernetes cluster for container orchestration
