@@ -1,6 +1,3 @@
-
----
-
 ```markdown
 # 🏥 AfyaTrack KE – Kenya Hospital Registry System
 
@@ -31,7 +28,7 @@
 
 ## 🧭 Overview
 
-AfyaTrack KE is a full-stack hospital registry and management system built with modern DevOps, Kubernetes, cloud infrastructure (AWS), observability, and CI/CD automation for real-world deployment in Kenya’s healthcare sector.
+AfyaTrack KE is a full-stack hospital registry and management system built with modern DevOps, Kubernetes, cloud infrastructure (AWS), observability, and CI/CD automation for real-world deployment in Kenya's healthcare sector.
 
 ---
 
@@ -67,11 +64,7 @@ AfyaTrack KE is a full-stack hospital registry and management system built with 
 
 ## 📁 Project Structure
 
-<details>
-<summary>📂 Click to expand</summary>
-
 ```
-
 afyatrack-ke/
 ├── app/                 # Node.js App (Express + EJS)
 │   ├── views/           # EJS templates
@@ -86,10 +79,8 @@ afyatrack-ke/
 ├── Dockerfile           # Image definition
 ├── docker-compose.yml   # Dev container orchestration
 └── README.md
+```
 
-````
-
-</details>
 
 ---
 
@@ -110,7 +101,7 @@ afyatrack-ke/
 git clone https://github.com/WeddyNkatha265/afyatrack-ke.git
 cd afyatrack-ke
 docker-compose up --build
-````
+```
 
 * App UI: [http://localhost:3000](http://localhost:3000)
 * DB: PostgreSQL on localhost:5432
@@ -322,12 +313,6 @@ This project is licensed under the **MIT License**.
 
 ---
 
-**Built with ❤️ for Kenya’s healthcare infrastructure.**
+**Built with ❤️ for Kenya's healthcare infrastructure.**
 *Last updated: October 2025 · Version: 1.0.0*
-
-```
-
----
-
-Let me know if you want this saved as a downloadable `.md` file or if you'd like help writing a GitHub Wiki version of this.
 ```
