@@ -1,0 +1,284 @@
+---
+- name: Configure AfyaTrack KE EC2 Instance
+  hosts: afyatrack_servers
+  become: yes
+  vars:
+    devops_group: devops
+    devops_user: devops
+    config_file: afyatrack_config.txt
+    app_directory: /opt/afyatrack-ke
+    db_password: "{{ vault_db_password }}"
+    
+  tasks:
+    - name: Update apt package cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install required system packages
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+          - software-properties-common
+          - python3-pip
+        state: present
+
+    - name: Create devops group
+      group:
+        name: "{{ devops_group }}"
+        state: present
+
+    - name: Create devops user
+      user:
+        name: "{{ devops_user }}"
+        group: "{{ devops_group }}"
+        shell: /bin/bash
+        create_home: yes
+        home: "/home/{{ devops_user }}"
+        state: present
+
+    - name: Add devops user to sudoers
+      copy:
+        content: "{{ devops_user }} ALL=(ALL) NOPASSWD:ALL"
+        dest: "/etc/sudoers.d/{{ devops_user }}"
+        mode: '0440'
+
+    - name: Create application directory
+      file:
+        path: "{{ app_directory }}"
+        state: directory
+        owner: "{{ devops_user }}"
+        group: "{{ devops_group }}"
+        mode: '0775'
+
+    - name: Create configuration file locally
+      copy:
+        content: |
+          # AfyaTrack KE Configuration
+          APP_NAME=AfyaTrack KE
+          APP_VERSION=1.0.0
+          ENVIRONMENT=production
+          DB_HOST=localhost
+          DB_PORT=5432
+          DB_NAME=hospitals
+          APP_PORT=3000
+          NODE_ENV=production
+        dest: "files/{{ config_file }}"
+        mode: '0644'
+
+    - name: Copy configuration file to server
+      copy:
+        src: "files/{{ config_file }}"
+        dest: "{{ app_directory }}/{{ config_file }}"
+        owner: "{{ devops_user }}"
+        group: "{{ devops_group }}"
+        mode: '0664'
+
+    - name: Set secure permissions on configuration file
+      file:
+        path: "{{ app_directory }}/{{ config_file }}"
+        owner: "{{ devops_user }}"
+        group: "{{ devops_group }}"
+        mode: '0640'
+
+    - name: Add PostgreSQL repository key
+      apt_key:
+        url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+        state: present
+
+    - name: Add PostgreSQL repository
+      apt_repository:
+        repo: "deb http://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main"
+        state: present
+        filename: postgresql
+
+    - name: Install PostgreSQL
+      apt:
+        name: 
+          - postgresql-13
+          - postgresql-contrib-13
+          - postgresql-client-13
+        state: latest
+        update_cache: yes
+
+    - name: Ensure PostgreSQL service is started and enabled
+      systemd:
+        name: postgresql
+        state: started
+        enabled: yes
+
+    - name: Configure PostgreSQL to accept connections
+      lineinfile:
+        path: /etc/postgresql/13/main/postgresql.conf
+        regexp: '^#?listen_addresses\s*='
+        line: "listen_addresses = 'localhost'"
+        backup: yes
+
+    - name: Create PostgreSQL database and user
+      become_user: postgres
+      postgresql_db:
+        name: hospitals
+        state: present
+
+    - name: Create PostgreSQL user with password
+      become_user: postgres
+      postgresql_user:
+        name: postgres
+        password: "{{ db_password }}"
+        state: present
+        role_attr_flags: SUPERUSER,CREATEDB,CREATEROLE
+
+    - name: Initialize hospital database schema
+      become_user: postgres
+      postgresql_query:
+        db: hospitals
+        query: |
+          CREATE TABLE IF NOT EXISTS hospitals (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            county VARCHAR(100) NOT NULL,
+            facility_type VARCHAR(100) NOT NULL,
+            beds INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
+
+    - name: Insert sample hospital data
+      become_user: postgres
+      postgresql_query:
+        db: hospitals
+        query: |
+          INSERT INTO hospitals (name, county, facility_type, beds) VALUES
+          ('Kenyatta National Hospital', 'Nairobi', 'Public', 1800),
+          ('Moi Teaching and Referral Hospital', 'Uasin Gishu', 'Public', 800),
+          ('Coast General Hospital', 'Mombasa', 'Public', 600)
+          ON CONFLICT DO NOTHING;
+
+    - name: Install Nginx
+      apt:
+        name: nginx
+        state: latest
+        update_cache: yes
+
+    - name: Configure Nginx for AfyaTrack KE
+      template:
+        src: templates/nginx-afyatrack.j2
+        dest: /etc/nginx/sites-available/afyatrack
+        backup: yes
+      notify: restart nginx
+
+    - name: Enable Nginx site
+      file:
+        src: /etc/nginx/sites-available/afyatrack
+        dest: /etc/nginx/sites-enabled/afyatrack
+        state: link
+      notify: restart nginx
+
+    - name: Remove default Nginx site
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      notify: restart nginx
+
+    - name: Ensure Nginx service is started and enabled
+      systemd:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Install Docker
+      shell: |
+        curl -fsSL https://get.docker.com -o get-docker.sh
+        sh get-docker.sh
+      args:
+        creates: /usr/bin/docker
+
+    - name: Add devops user to docker group
+      user:
+        name: "{{ devops_user }}"
+        groups: docker
+        append: yes
+
+    - name: Ensure Docker service is started and enabled
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Create application startup script
+      template:
+        src: templates/start-app.j2
+        dest: "{{ app_directory }}/start-app.sh"
+        mode: '0755'
+        owner: "{{ devops_user }}"
+        group: "{{ devops_group }}"
+
+    - name: Create systemd service for AfyaTrack KE
+      template:
+        src: templates/afyatrack-service.j2
+        dest: /etc/systemd/system/afyatrack-ke.service
+      notify: reload systemd
+
+    - name: Ensure AfyaTrack KE service is started and enabled
+      systemd:
+        name: afyatrack-ke
+        state: started
+        enabled: yes
+        daemon_reload: yes
+
+    - name: Configure UFW firewall
+      ufw:
+        rule: allow
+        port: '80'
+        proto: tcp
+
+    - name: Configure UFW firewall for SSH
+      ufw:
+        rule: allow
+        port: '22'
+        proto: tcp
+
+    - name: Enable UFW firewall
+      ufw:
+        state: enabled
+        policy: deny
+
+    - name: Display deployment information
+      debug:
+        msg: |
+          ✅ AfyaTrack KE Configuration Complete!
+          
+          📋 Deployment Summary:
+          - Server: {{ ansible_hostname }}
+          - Application Directory: {{ app_directory }}
+          - Database: PostgreSQL 13 (hospitals)
+          - Web Server: Nginx
+          - Configuration File: {{ app_directory }}/{{ config_file }}
+          - Service: afyatrack-ke (systemd)
+          
+          🔗 Access URLs:
+          - Application: http://{{ ansible_default_ipv4.address }}
+          - Health Check: http://{{ ansible_default_ipv4.address }}/health
+          
+          👤 Management Commands:
+          - Check service: sudo systemctl status afyatrack-ke
+          - View logs: sudo journalctl -u afyatrack-ke -f
+          - Database access: sudo -u postgres psql hospitals
+
+  handlers:
+    - name: restart nginx
+      systemd:
+        name: nginx
+        state: restarted
+
+    - name: reload systemd
+      systemd:
+        daemon_reload: yes
+
+    - name: restart postgresql
+      systemd:
+        name: postgresql
+        state: restarted
