@@ -95,7 +95,7 @@ afyatrack-ke/
 ├── docker-compose.yml     # Local development setup
 ├── Dockerfile             # How to build the container
 ├── deploy-k8s.sh          # Kubernetes deployment script
-├── Documentation.m        # Technical Assessment Documentation
+├── Documentation.md       # Technical Assessment Documentation
 └── README.md              # This file
 ```
 ## 🔁 CI/CD Pipeline
