@@ -238,12 +238,17 @@ metadata:
     prometheus.io/port: "3000"
 ```
 
-### Monitoring Stack:
-- **Prometheus**: Metrics collection and alerting
-- **Grafana**: Visualization and dashboards
-- **Custom Metrics**: HTTP requests, hospital registrations, error rates
-- **Health Checks**: Readiness and liveness probes
-- **Alerting**: Application down, high error rates, performance issues
+**Monitoring Stack**:
+- ✅ **Prometheus** - Metrics collection and storage
+- ✅ **Grafana** - Visualization dashboards
+- ✅ **Alerting** - Critical metrics monitoring
+- ✅ **Health Checks** - Application status monitoring
+
+**Key Metrics Tracked**:
+- HTTP request rates and error rates
+- Database connection pool status
+- Container resource utilization
+- Application response times
 
 ### SRE Implementation:
 - ✅ Application metrics endpoint (`/metrics`)
@@ -256,6 +261,15 @@ metadata:
 ---
 
 ## Bonus Task: Ansible Configuration Management
+
+**Status**: Complete
+
+**Ansible Playbook Features**:
+- ✅ User and group management
+- ✅ PostgreSQL installation and configuration
+- ✅ Nginx web server setup
+- ✅ File permissions and security
+- ✅ Idempotent operations
 
 ### Approach
 - Created idempotent Ansible playbook for complete server configuration
