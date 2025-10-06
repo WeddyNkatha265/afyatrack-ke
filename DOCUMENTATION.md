@@ -171,7 +171,7 @@ Implemented a complete monitoring stack with Prometheus for metrics collection a
 - Grafana for visualization
 - Custom application metrics
 - Infrastructure monitoring
-- Alerting rules for critical events
+- Alerting rules on Grafana UI for critical events 
 ```
 
 ---

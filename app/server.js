@@ -9,23 +9,12 @@ const register = new client.Registry();
 
 // Add a default label which is added to all metrics
 register.setDefaultLabels({
-  app: 'afyatrack-ke'
+  app: 'afyatrack-ke',
+  service: 'hospital-registry'
 });
 
-// Enable the collection of default metrics
+// Enable the collection of default metrics - this gives us everything we need!
 client.collectDefaultMetrics({ register });
-
-// Custom metrics
-const httpRequestCounter = new client.Counter({
-  name: 'http_requests_total',
-  help: 'Total HTTP requests',
-  labelNames: ['method', 'route', 'status_code']
-});
-
-const hospitalRegistrationCounter = new client.Counter({
-  name: 'hospital_registrations_total',
-  help: 'Total hospital registrations'
-});
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -77,20 +66,24 @@ async function initDB() {
     }
 }
 
-// Metrics endpoint
+// Metrics endpoint - just expose the default metrics
 app.get('/metrics', async (req, res) => {
-  res.setHeader('Content-Type', register.contentType);
-  res.send(await register.metrics());
+  try {
+    res.set('Content-Type', register.contentType);
+    const metrics = await register.metrics();
+    res.end(metrics);
+  } catch (err) {
+    console.error('Error generating metrics:', err);
+    res.status(500).end('Error generating metrics');
+  }
 });
 
 // Routes
 app.get('/', async (req, res) => {
     try {
-        httpRequestCounter.labels('GET', '/', '200').inc();
         const result = await pool.query('SELECT * FROM hospitals ORDER BY created_at DESC');
         res.render('index', { hospitals: result.rows });
     } catch (err) {
-        httpRequestCounter.labels('GET', '/', '500').inc();
         console.error('Error fetching hospitals:', err);
         res.status(500).send('Error fetching hospitals');
     }
@@ -103,14 +96,8 @@ app.post('/hospitals', async (req, res) => {
             'INSERT INTO hospitals (name, county, facility_type, beds) VALUES ($1, $2, $3, $4)',
             [name, county, facility_type, beds || null]
         );
-        
-        // Increment metrics
-        hospitalRegistrationCounter.inc();
-        httpRequestCounter.labels('POST', '/hospitals', '200').inc();
-        
         res.redirect('/');
     } catch (err) {
-        httpRequestCounter.labels('POST', '/hospitals', '500').inc();
         console.error('Error adding hospital:', err);
         res.status(500).send('Error adding hospital');
     }
@@ -118,8 +105,11 @@ app.post('/hospitals', async (req, res) => {
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-    httpRequestCounter.labels('GET', '/health', '200').inc();
-    res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
+    res.status(200).json({ 
+        status: 'OK', 
+        timestamp: new Date().toISOString(),
+        metrics: 'Default Node.js metrics available at /metrics'
+    });
 });
 
 // Start server
@@ -128,7 +118,7 @@ app.listen(port, async () => {
     await initDB();
     console.log(`✅ AfyaTrack KE server running on http://localhost:${port}`);
     console.log(`🏥 Health check available at http://localhost:${port}/health`);
-    console.log(`📊 Metrics available at http://localhost:${port}/metrics`);
+    console.log(`📊 Default metrics available at http://localhost:${port}/metrics`);
 });
 
 // Handle graceful shutdown

@@ -14,33 +14,41 @@ spec:
         app: grafana
     spec:
       containers:
-      - name: grafana
-        image: grafana/grafana:latest
-        ports:
-        - containerPort: 3000
-        env:
-        - name: GF_SECURITY_ADMIN_USER
-          value: admin
-        - name: GF_SECURITY_ADMIN_PASSWORD
-          value: admin123
-        volumeMounts:
-        - name: grafana-storage
-          mountPath: /var/lib/grafana
-        - name: grafana-datasources
-          mountPath: /etc/grafana/provisioning/datasources
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "100m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
+        - name: grafana
+          image: grafana/grafana:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: GF_SECURITY_ADMIN_USER
+              value: admin
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              value: admin123
+          volumeMounts:
+            - name: grafana-storage
+              mountPath: /var/lib/grafana
+            - name: grafana-datasources
+              mountPath: /etc/grafana/provisioning/datasources
+            - name: grafana-dashboard-provisioning
+              mountPath: /etc/grafana/provisioning/dashboards
+            - name: grafana-dashboards
+              mountPath: /var/lib/grafana/dashboards
       volumes:
-      - name: grafana-storage
-        emptyDir: {}
-      - name: grafana-datasources
-        configMap:
-          name: grafana-datasources
+        - name: grafana-storage
+          emptyDir: {}
+        - name: grafana-datasources
+          configMap:
+            name: grafana-datasources
+        - name: grafana-dashboard-provisioning
+          configMap:
+            name: grafana-dashboard-provisioning
+        - name: grafana-dashboards
+          projected:
+            sources:
+              - configMap:
+                  name: grafana-default-dashboard
+              - configMap:
+                  name: grafana-dashboard-afyatrack
+
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -53,9 +61,11 @@ data:
     datasources:
     - name: Prometheus
       type: prometheus
-      url: http://prometheus-service:8080
+      url: http://prometheus-service.afyatrack-ke.svc.cluster.local:8080
       access: proxy
       isDefault: true
+      jsonData:
+        timeInterval: 5s
 ---
 apiVersion: v1
 kind: Service
