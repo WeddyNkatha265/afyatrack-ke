@@ -1,143 +1,4 @@
-# 🏥 AfyaTrack KE - Kenya Hospital Registry System
 
-A comprehensive DevOps project demonstrating a hospital registration and management system for Kenyan counties, built with modern DevOps practices and cloud technologies.
-
-## 📋 Table of Contents
-- [Project Overview](#project-overview)
-- [Architecture](#architecture)
-- [Project Structure](#project-structure)
-- [Quick Start](#quick-start)
-- [Technical Tasks](#technical-tasks)
-- [Configuration](#configuration)
-- [Deployment](#deployment)
-- [Monitoring](#monitoring)
-- [Development](#development)
-- [Assessment Guide](#assessment-guide)
-
-## 🎯 Project Overview
-
-**AfyaTrack KE** is a full-stack DevOps demonstration project that implements a hospital registry system for Kenya. The system allows registration, tracking, and management of hospitals across different Kenyan counties with bed capacity tracking and facility type categorization.
-
-### Key Features
-- 🏥 Hospital registration with Kenyan county categorization
-- 📊 Bed capacity tracking and reporting
-- 🐳 Docker containerization with multi-service architecture
-- ☁️ AWS cloud infrastructure provisioned with Terraform
-- 🔄 CI/CD pipeline with GitHub Actions
-- 📈 Monitoring with Prometheus and Grafana
-- 🔒 Security best practices implementation
-
-## 🏗️ Architecture
-
-### System Architecture Diagram
-```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Web Browser   │───▶│   Load Balancer  │───▶│  EC2 Instance   │
-│                 │    │                  │    │                 │
-└─────────────────┘    └──────────────────┘    └─────────┬───────┘
-                                                         │
-┌─────────────────┐    ┌──────────────────┐    ┌─────────▼───────┐
-│   Mobile App    │───▶│   API Gateway    │───▶│  PostgreSQL DB  │
-│                 │    │                  │    │                 │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-
-┌─────────────────────────────────────────────────────────────────┐
-│                        AWS Cloud                                │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐            │
-│  │    VPC      │  │  EC2 Instance │  │  RDS/EC2 DB │            │
-│  │             │  │             │  │             │            │
-│  └─────────────┘  └─────────────┘  └─────────────┘            │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Technology Stack
-| Layer | Technology | Purpose |
-|-------|------------|---------|
-| **Frontend** | Node.js, Express, EJS | Web interface & server rendering |
-| **Database** | PostgreSQL | Relational data storage |
-| **Container** | Docker, Docker Compose | Environment consistency |
-| **Orchestration** | Kubernetes | Container management |
-| **Infrastructure** | Terraform, AWS | Cloud provisioning |
-| **CI/CD** | GitHub Actions | Automation pipeline |
-| **Monitoring** | Prometheus, Grafana | Observability |
-| **Config Mgmt** | Ansible | Server automation |
-
-## 📁 Project Structure
-
-```
-afyatrack-ke/
-├── 📁 app/                          # Node.js Web Application
-│   ├── 📄 package.json              # Dependencies and scripts
-│   ├── 📄 server.js                 # Express server and routes
-│   ├── 📄 healthcheck.js            # Container health checks
-│   ├── 📁 views/                    # EJS templates
-│   │   └── 📄 index.ejs             # Main hospital registry UI
-│   └── 📁 public/                   # Static assets
-│
-├── 📁 database/                     # Database Configuration
-│   └── 📄 init.sql                  # Schema and sample data
-│
-├── 📁 terraform/                    # Infrastructure as Code
-│   ├── 📄 main.tf                   # AWS resource definitions
-│   ├── 📄 variables.tf              # Input variables
-│   ├── 📄 outputs.tf                # Output values
-│   ├── 📄 terraform.tfvars          # Variable values
-│   └── 📄 user-data.sh              # EC2 initialization script
-│
-├── 📁 k8s/                         # Kubernetes Manifests
-│   ├── 📄 deployment.yml           # App deployment config
-│   └── 📄 service.yml              # Service definitions
-│
-├── 📁 monitoring/                  # Observability
-│   ├── 📄 prometheus.yml           # Metrics collection
-│   ├── 📄 alerts.yml               # Alerting rules
-│   └── 📄 grafana-dashboard.yml    # Dashboard configs
-│
-├── 📁 ansible/                     # Configuration Management
-│   ├── 📄 playbook.yml             # Server configuration
-│   └── 📄 inventory.yml            # Target servers
-│
-├── 📁 .github/workflows/           # CI/CD Pipelines
-│   └── 📄 ci-cd.yml                # GitHub Actions workflow
-│
-├── 📄 Dockerfile                   # Container definition
-├── 📄 docker-compose.yml           # Local development
-├── 📄 .gitignore                   # Git ignore rules
-└── 📄 README.md                    # Project documentation
-```
-
-## 🚀 Quick Start
-
-### Prerequisites
-- **Docker** & **Docker Compose**
-- **Node.js** 18+ (for local development)
-- **Git**
-- **AWS Account** (for cloud deployment)
-
-### Local Development
-```bash
-# 1. Clone the repository
-git clone https://github.com/WeddyNkatha265/afyatrack-ke.git
-cd afyatrack-ke
-
-# 2. Start with Docker Compose
-docker-compose up --build
-
-# 3. Access the application
-# Web Interface: http://localhost:3000
-# Database: localhost:5432
-```
-
-### Using Docker Hub Image
-```bash
-# Run directly from Docker Hub
-docker run -d -p 3000:3000 \
-  -e DB_HOST=localhost \
-  -e DB_USER=postgres \
-  -e DB_PASSWORD=password \
-  -e DB_NAME=hospitals \
-  weddynkatha265/afyatrack-ke:latest
-```
 
 ## ⚙️ Configuration
 
@@ -478,3 +339,279 @@ This comprehensive README provides:
 - ✅ All technical documentation in one place
 
 The README is designed to be both beginner-friendly for quick setup and detailed enough for technical assessment and production deployment! 🚀
+---------------
+
+
+# AfyaTrack KE - Kenya Hospital Registry System
+
+## Overview
+A comprehensive hospital registration and management system for Kenyan healthcare facilities, built with modern DevOps practices and cloud-native technologies.
+
+## 🚀 Features
+
+- **🏥 Hospital Management**: Register and manage hospitals across Kenyan counties
+- **🗺️ County-based Organization**: Categorize hospitals by Kenyan counties
+- **📊 Real-time Dashboard**: Monitor hospital statistics and registrations
+- **🐳 Containerized**: Full Docker support for development and production
+- **☁️ Cloud Ready**: AWS infrastructure with Terraform
+- **🔄 CI/CD**: Automated testing, building, and deployment
+- **📈 Monitoring**: Prometheus and Grafana for observability
+- **🎯 SRE Practices**: Health checks, metrics, and alerting
+
+## 🏗️ Architecture
+
+
+### Technology Stack
+| Layer | Technology | Purpose |
+|-------|------------|---------|
+| **Frontend** | Node.js, Express, EJS | Web interface & server rendering |
+| **Database** | PostgreSQL | Relational data storage |
+| **Container** | Docker, Docker Compose | Environment consistency |
+| **Orchestration** | Kubernetes | Container management |
+| **Infrastructure** | Terraform, AWS | Cloud provisioning |
+| **CI/CD** | GitHub Actions | Automation pipeline |
+| **Monitoring** | Prometheus, Grafana | Observability |
+| **Config Mgmt** | Ansible | Server automation |
+
+## 📁 Project Structure
+
+```
+afyatrack-ke/
+├── 📁 app/                          # Node.js Web Application
+│   ├── 📄 package.json              # Dependencies and scripts
+│   ├── 📄 server.js                 # Express server and routes
+│   ├── 📄 healthcheck.js            # Container health checks
+│   ├── 📁 views/                    # EJS templates
+│   │   └── 📄 index.ejs             # Main hospital registry UI
+│   └── 📁 public/                   # Static assets
+│
+├── 📁 database/                     # Database Configuration
+│   └── 📄 init.sql                  # Schema and sample data
+│
+├── 📁 terraform/                    # Infrastructure as Code
+│   ├── 📄 main.tf                   # AWS resource definitions
+│   ├── 📄 variables.tf              # Input variables
+│   ├── 📄 outputs.tf                # Output values
+│   ├── 📄 terraform.tfvars          # Variable values
+│   └── 📄 user-data.sh              # EC2 initialization script
+│
+├── 📁 k8s/                         # Kubernetes Manifests
+│   ├── 📄 deployment.yml           # App deployment config
+│   └── 📄 service.yml              # Service definitions
+│
+├── 📁 monitoring/                  # Observability
+│   ├── 📄 prometheus.yml           # Metrics collection
+│   ├── 📄 alerts.yml               # Alerting rules
+│   └── 📄 grafana-dashboard.yml    # Dashboard configs
+│
+├── 📁 ansible/                     # Configuration Management
+│   ├── 📄 playbook.yml             # Server configuration
+│   └── 📄 inventory.yml            # Target servers
+│
+├── 📁 .github/workflows/           # CI/CD Pipelines
+│   └── 📄 ci-cd.yml                # GitHub Actions workflow
+│
+├── 📄 Dockerfile                   # Container definition
+├── 📄 docker-compose.yml           # Local development
+├── 📄 .gitignore                   # Git ignore rules
+└── 📄 README.md                    # Project documentation
+```
+
+
+
+## 🚀 Quick Start
+
+### Prerequisites
+- **Docker** & **Docker Compose**
+- **Node.js** 18+ (for local development)
+- **Git**
+- **AWS Account** (for cloud deployment)
+
+### Local Development
+```bash
+# 1. Clone the repository
+git clone https://github.com/WeddyNkatha265/afyatrack-ke.git
+cd afyatrack-ke
+
+# 2. Start with Docker Compose
+docker-compose up --build
+
+# 3. Access the application
+# Web Interface: http://localhost:3000
+# Database: localhost:5432
+```
+
+### Using Docker Hub Image
+```bash
+# Run directly from Docker Hub
+docker run -d -p 3000:3000 \
+  -e DB_HOST=localhost \
+  -e DB_USER=postgres \
+  -e DB_PASSWORD=password \
+  -e DB_NAME=hospitals \
+  weddynkatha265/afyatrack-ke:latest
+```
+
+### Production Deployment
+
+#### 1. Infrastructure (AWS)
+```bash
+cd terraform
+terraform init
+terraform plan
+terraform apply
+```
+
+#### 2. Automated CI/CD
+Push to main branch triggers automatic deployment:
+```bash
+git add .
+git commit -m "feat: new feature"
+git push origin main
+```
+
+#### 3. Manual Deployment
+```bash
+# Build and push image
+docker build -t weddynkatha265/afyatrack-ke:latest .
+docker push weddynkatha265/afyatrack-ke:latest
+
+# Deploy to EC2
+./deploy-k8s.sh
+```
+
+## 📊 CI/CD Pipeline
+
+### Pipeline Diagram
+```
+┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+│   Code Commit   │  │   Build Stage   │  │   Test Stage    │
+│                 │  │                 │  │                 │
+│  • Git Push     │─▶│ • Docker Build  │─▶│ • Unit Tests    │
+│  • PR Create    │  │ • Image Tag     │  │ • Linting       │
+└─────────────────┘  │ • Push to Hub   │  └─────────────────┘
+                     └─────────────────┘
+                               │
+                     ┌─────────────────┐  ┌─────────────────┐
+                     │  Deploy Stage   │  │  Verify Stage   │
+                     │                 │  │                 │
+                     │ • SSH to EC2    │─▶│ • Health Check  │
+                     │ • Pull Image    │  │ • Smoke Tests   │
+                     │ • Start App     │  │ • Logs Check    │
+                     └─────────────────┘  └─────────────────┘
+```
+
+### Pipeline Stages
+
+1. **Test Stage**
+   - Node.js dependency installation
+   - Unit test execution
+   - Code quality checks
+
+2. **Build Stage**
+   - Docker image build with `--no-cache`
+   - Multi-tagging (timestamp, commit, latest)
+   - Image verification and push to Docker Hub
+
+3. **Deploy Stage**
+   - SSH-based deployment to AWS EC2
+   - Database initialization
+   - Container orchestration
+   - Health check verification
+
+4. **Verify Stage**
+   - Application health checks
+   - Database connectivity tests
+   - End-to-end functionality verification
+
+## 🎯 Monitoring & Observability
+
+### Access Points
+- **Application**: `http://<ec2-ip>:3000`
+- **Grafana Dashboards**: `http://<ec2-ip>:30609` (admin/admin123)
+- **Prometheus Metrics**: `http://<ec2-ip>:32327`
+- **Health Check**: `http://<ec2-ip>:3000/health`
+- **Metrics Endpoint**: `http://<ec2-ip>:3000/metrics`
+
+### Key Metrics Tracked
+- HTTP request rates and error rates
+- Hospital registration counts
+- Database connection pool status
+- Container resource utilization
+- Application uptime and health status
+
+## 🔧 Management Commands
+
+### Application Management
+```bash
+# Check status
+ssh -i ~/.ssh/ec2_key.pem ubuntu@<ec2-ip> "sudo docker ps"
+
+# View logs
+ssh -i ~/.ssh/ec2_key.pem ubuntu@<ec2-ip> "sudo docker logs afyatrack-web-app -f"
+
+# Database access
+ssh -i ~/.ssh/ec2_key.pem ubuntu@<ec2-ip> "sudo docker exec -it afyatrack-database psql -U postgres -d hospitals"
+```
+
+### Kubernetes Management
+```bash
+# Check cluster status
+kubectl get all -n afyatrack-ke
+
+# View application logs
+kubectl logs -n afyatrack-ke -l app=afyatrack-web --tail=10
+
+# Port forwarding for local access
+kubectl port-forward -n afyatrack-ke service/afyatrack-service 8080:80
+```
+
+## 🛡️ Security Features
+
+- Non-root user execution in containers
+- Secure secret management with GitHub Secrets
+- Database connection encryption
+- Proper file permissions and ownership
+- Firewall configuration (UFW)
+- Security headers in Nginx
+- Regular security updates
+
+## 📈 Performance
+
+- **Container Optimized**: Alpine Linux base images
+- **Database Pooling**: Connection reuse for better performance
+- **Caching**: Docker layer caching for faster builds
+- **Resource Limits**: Kubernetes resource requests and limits
+- **Health Checks**: Readiness and liveness probes
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Kenya Ministry of Health for inspiration
+- AWS for cloud infrastructure
+- Docker and Kubernetes communities
+- Prometheus and Grafana for monitoring solutions
+
+---
+
+## 📞 Support
+
+For support and questions:
+- 📧 Email: weddynkatha265@github.com
+- 🐛 Issues: [GitHub Issues](https://github.com/weddynkatha265/afyatrack-ke/issues)
+- 📚 Documentation: [Project Wiki](https://github.com/weddynkatha265/afyatrack-ke/wiki)
+
+---
+
+**Built with ❤️ for Kenya's Healthcare System**
