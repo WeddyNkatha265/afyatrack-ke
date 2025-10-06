@@ -75,9 +75,6 @@ jobs:
         echo "  - $TIMESTAMP (ISO timestamp)"
         echo "  - latest"
         echo ""
-        echo "🔍 Image verification:"
-        docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest find /app/views -name "*.ejs" 2>/dev/null && echo "✅ Views directory verified" || echo "❌ Views directory missing"
-        echo ""
         echo "🔗 View: https://hub.docker.com/r/weddynkatha265/afyatrack-ke/tags"
 
   deploy-to-vm:
