@@ -22,3 +22,23 @@ output "security_group_id" {
   description = "ID of the security group"
   value       = aws_security_group.web_sg.id
 }
+
+output "ansible_inventory" {
+  description = "Ansible inventory configuration"
+  value = <<EOT
+# Ansible Inventory for AfyaTrack KE
+# Add this to your ansible/inventory.yml file
+
+afyatrack_servers:
+  hosts:
+    afyatrack-vm:
+      ansible_host: ${aws_eip.web.public_ip}
+      ansible_user: ubuntu
+      ansible_ssh_private_key_file: ~/.ssh/id_rsa
+EOT
+}
+
+output "ansible_deployment_command" {
+  description = "Command to run Ansible deployment"
+  value = "cd ansible && EC2_PUBLIC_IP=${aws_eip.web.public_ip} ./deploy.sh"
+}
