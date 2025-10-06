@@ -1,0 +1,31 @@
+#!/bin/bash
+# AfyaTrack KE Application Startup Script
+
+APP_DIR="{{ app_directory }}"
+CONFIG_FILE="{{ app_directory }}/{{ config_file }}"
+
+# Load configuration
+if [ -f "$CONFIG_FILE" ]; then
+    source "$CONFIG_FILE"
+fi
+
+# Pull latest Docker image
+docker pull weddynkatha265/afyatrack-ke:latest
+
+# Stop existing container if running
+docker stop afyatrack-ke-app 2>/dev/null || true
+docker rm afyatrack-ke-app 2>/dev/null || true
+
+# Start application container
+docker run -d \
+    --name afyatrack-ke-app \
+    --restart unless-stopped \
+    -p 3000:3000 \
+    -e DB_HOST=localhost \
+    -e DB_USER=postgres \
+    -e DB_PASSWORD={{ db_password }} \
+    -e DB_NAME=hospitals \
+    -e NODE_ENV=production \
+    weddynkatha265/afyatrack-ke:latest
+
+echo "✅ AfyaTrack KE application started successfully"
