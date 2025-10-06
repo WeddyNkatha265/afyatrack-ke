@@ -45,10 +45,10 @@ minikube service list -n afyatrack-ke
 # ┌──────────────┬────────────────────┬──────────────┬───────────────────────────┐
 # │  NAMESPACE   │        NAME        │ TARGET PORT  │            URL            │
 # ├──────────────┼────────────────────┼──────────────┼───────────────────────────┤
-# │ afyatrack-ke │ afyatrack-service  │ 80           │ http://192.168.49.2:30269 │
-# │ afyatrack-ke │ grafana-service    │ 3000         │ http://192.168.49.2:30609 │
+# │ afyatrack-ke │ afyatrack-service  │ 80           │ http://192.*.49.*:30269 │
+# │ afyatrack-ke │ grafana-service    │ 3000         │ http://192.*.49.*:30609 │
 # │ afyatrack-ke │ postgresql         │ No node port │                           │
-# │ afyatrack-ke │ prometheus-service │ 8080         │ http://192.168.49.2:32327 │
+# │ afyatrack-ke │ prometheus-service │ 8080         │ http://192.*.49.*:32327 │
 # └──────────────┴────────────────────┴──────────────┴───────────────────────────┘
 
 # 4. Access the application using the URL from above
@@ -224,9 +224,9 @@ After deployment, you should see these services:
 
 | Service | Purpose | Access URL |
 |---------|---------|------------|
-| `afyatrack-service` | Main application | http://192.168.49.2:30269 |
-| `grafana-service` | Monitoring dashboard | http://192.168.49.2:30609 |
-| `prometheus-service` | Metrics collection | http://192.168.49.2:32327 |
+| `afyatrack-service` | Main application | http://192.*.49.*:30269 |
+| `grafana-service` | Monitoring dashboard | http://192.*.49.*:30609 |
+| `prometheus-service` | Metrics collection | http://192.*.49.*:32327 |
 | `postgresql` | Database | Internal only |
 
 ### Accessing Kubernetes Services
@@ -301,8 +301,8 @@ Push changes to main branch or create a pull request to trigger the pipeline.
 
 When using the Kubernetes deployment, monitoring is automatically set up:
 
-- **Prometheus**: Collects metrics at http://192.168.49.2:32327
-- **Grafana**: Dashboards at http://192.168.49.2:30609
+- **Prometheus**: Collects metrics at http://192.*.49.*:32327
+- **Grafana**: Dashboards at http://192.*.49.*:30609
   - Username: `admin`
   - Password: `admin123`
 
@@ -370,9 +370,9 @@ terraform apply
 weddy@weddy-HP-EliteBook-Revolve-810-G3:~/weddys/afyatrack-ke/terraform$ terraform output
 instance_id = "i-065aa3aa72595f0d1"
 security_group_id = "sg-0b78736af46223117"
-ssh_connection = "ssh -i ~/Documents/awse2eproject.pem ubuntu@54.224.136.56"
-web_server_public_ip = "54.224.136.56"
-web_server_url = "http://54.224.136.56:3000"
+ssh_connection = "ssh -i ~/Documents/awse2eproject.pem ubuntu@54.224.136.*"
+web_server_public_ip = "54.224.136.*"
+web_server_url = "http://54.224.136.*:3000"
 weddy@weddy-HP-EliteBook-Revolve-810-G3:~/weddys/afyatrack-ke/terraform$ 
 ```
 
