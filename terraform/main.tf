@@ -63,13 +63,13 @@ resource "aws_security_group" "web_sg" {
   description = "Security group for AfyaTrack KE web server"
   vpc_id      = aws_vpc.main.id
 
-  # SSH access from anywhere
+  # Allow SSH only from your IP (not the world)
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "SSH access"
+    cidr_blocks = ["${var.admin_ip}/32"]
+    description = "SSH access from admin workstation"
   }
 
   # HTTP access

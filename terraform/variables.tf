@@ -27,3 +27,8 @@ variable "key_pair_name" {
   type        = string
   default     = "awse2eproject"  # downloaded key pair name
 }
+
+variable "admin_ip" {
+  description = "Public IP allowed to SSH into EC2"
+  type        = string
+}
