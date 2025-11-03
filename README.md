@@ -1,4 +1,4 @@
-# 🏥 AfyaTrack KE - Kenya Hospital Registry System
+# 🏥 AfyaTrack KE - Kenya Hospital Registry System.
 
 A complete hospital management system for Kenyan counties with full DevOps implementation. This project demonstrates modern development practices with Docker, Kubernetes, AWS infrastructure, and automated CI/CD pipelines.
 
