@@ -79,7 +79,7 @@
       block:
         - name: Add PostgreSQL APT repository
           apt_repository:
-            repo: "deb https://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main"
+            repo: "deb [arch=amd64] https://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main"
             state: present
             filename: postgresql
 
@@ -88,9 +88,14 @@
             url: "https://www.postgresql.org/media/keys/ACCC4CF8.asc"
             state: present
 
+        - name: Update apt cache after adding repository
+          apt:
+            update_cache: yes
+            cache_valid_time: 3600
+
         - name: Install PostgreSQL
           apt:
-            name: "postgresql-{{ postgres_version }}"
+            name: "postgresql"
             state: present
             update_cache: yes
 
